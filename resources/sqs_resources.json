@@ -1,0 +1,4 @@
+{
+    "sqs_app_queue_url": "https://sqs.us-west-1.amazonaws.com/765288906827/cc-project-sqs",
+    "sqs_region": "us-west-1"
+}
