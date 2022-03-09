@@ -1,4 +1,5 @@
 {
-    "sqs_app_queue_url": "https://sqs.us-west-1.amazonaws.com/765288906827/cc-project-sqs",
+    "sqs_req_queue_name": "cc-project-req-sqs",
+    "sqs_res_queue_name": "cc-project-res-sqs",
     "sqs_region": "us-west-1"
 }

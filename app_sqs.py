@@ -1,63 +1,74 @@
 import boto3
-from botocore.exceptions import ClientError
+import json
+import logging
+import time
+
 
 class sqs_app:
     def __init__(self):
         self.sqs_resources = json.load(open('resources/sqs_resources.json'))
-        self.sqs = boto3.resource('sqs')
+        self.sqs = boto3.resource('sqs', region_name=self.sqs_resources['sqs_region'])
         self.logger = logging.getLogger(__name__)
 
     def pop_request_from_queue(self):
-        messages = self.sqs.receive_message(
-            QueueUrl=sqs_resources['sqs_app_queue_url'],
-            AttributeNames=['SentTimestamp'],
+        queue = self.sqs.get_queue_by_name(QueueName=self.sqs_resources['sqs_req_queue_name'])
+        messages = queue.receive_messages(
+            QueueUrl=queue.url,
             MaxNumberOfMessages=1,
-            MessageAttributeNames=['request_id'],
+            MessageAttributeNames=['All'],
             VisibilityTimeout=0,
             WaitTimeSeconds=0
         )
 
-        request = messages['Message'][0]
-        self.logger.info('Request received on app: %s' % request)
-        
-        return request
+        if not messages:
+            return None, None
+
+        message = messages[0]
+        print("Request received on app: %s" % json.loads(message.body))
+        self.logger.info('Request received on app: %s' % message)
+
+        return json.loads(message.body), message.receipt_handle
 
     def do_something_with_request(self, message):
+        time.sleep(10)
         return {
-            # Response goes here
+            'something': 'something'
         }
 
-    def delete_request_from_queue(self. receipt_handle):
-        self.sqs.delete_message(
-            QueueUrl=sqs_resources['sqs_app_queue_url'],
-            ReceiptHandle=request['RecieptHandle']
+    def delete_request_from_queue(self, handle):
+        queue = self.sqs.get_queue_by_name(QueueName=self.sqs_resources['sqs_req_queue_name'])
+        sqs_response = queue.delete_messages(
+            Entries=[{
+                'Id': '0',
+                'ReceiptHandle': handle
+            }]
         )
+        print('Deleted message in app: %s' % sqs_response)
 
-    def push_response_to_queue(self.response):
-        response_id = response['response_id']
-        push_response = self.sqs.send_message(
-            QueueUrl=sqs_resources['sqs_app_queue_url'],
+    def push_response_to_queue(self, message):
+        queue = self.sqs.get_queue_by_name(QueueName=self.sqs_resources['sqs_res_queue_name'])
+        sqs_response = queue.send_message(
+            QueueUrl=queue.url,
             DelaySeconds=0,
-            MessageAttributes={
-                'response_id': {
-                    'DataType': 'String',
-                    'StringValue': response_id
-                }
-            },
-            MessageBody=response['response']
+            MessageAttributes={},
+            MessageBody=json.dumps(message)
         )
 
-        self.logger.info('Response sent: %s' % push_response['MessageId'])
-    
+        print("Response sent from app: %s" % sqs_response)
+        self.logger.info('Response sent: %s' % sqs_response)
+
+
 if __name__ == "__main__":
     sqs_app_obj = sqs_app()
 
     while True:
-        request = sqs_app_obj.pop_request_from_queue()
+        request, receipt_handle = sqs_app_obj.pop_request_from_queue()
+        if not request:
+            continue
 
         response = sqs_app_obj.do_something_with_request(request)
-        sqs_app_obj.delete_request_from_queue(request['RecieptHandle'])
+        sqs_app_obj.delete_request_from_queue(receipt_handle)
         sqs_app_obj.push_response_to_queue({
-            'response_id': 'gotta be the same as request id, but different attribute name so I can filter at web'
+            'message_id': request['message_id'],
             'response': response
         })
