@@ -128,6 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-.idea/
 
+# CSE-546
+# Project files and others
+.idea/
 resources/response_map.json
+*.jpg
