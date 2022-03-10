@@ -9,9 +9,7 @@ import logging
 import threading
 import time
 import os
-from PIL import Image
 import base64
-import io
 
 lock = threading.Lock()
 
@@ -25,7 +23,6 @@ class sqs_web:
 
     def push_request_to_queue(self, image):
         encoded_image = base64.b64encode(image).decode('utf-8')
-        print(encoded_image)
         try:
             queue = self.sqs.get_queue_by_name(QueueName=self.sqs_resources['sqs_req_queue_name'])
             sqs_response = queue.send_message(
@@ -37,7 +34,7 @@ class sqs_web:
                     'image': encoded_image
                 })
             )
-            print('Request sent: %s' % sqs_response)
+            print('Request sent: %s' % sqs_response, flush=True)
             self.logger.info('Request sent from web: %s' % sqs_response['MessageId'])
 
         except ClientError as error:
@@ -52,7 +49,7 @@ class sqs_web:
                 'ReceiptHandle': handle
             }]
         )
-        print('Deleted message in web: %s' % sqs_response)
+        print('Deleted message in web: %s' % sqs_response, flush=True)
 
     def pop_response_from_queue(self):
         queue = self.sqs.get_queue_by_name(QueueName=self.sqs_resources['sqs_res_queue_name'])
@@ -80,7 +77,7 @@ class sqs_web:
             for message in messages:
                 message_body = json.loads(message.body)
 
-                print('Response received on web: %s' % json.loads(message.body))
+                print('Response received on web: %s' % json.loads(message.body), flush=True)
                 self.logger.info('Response received on web: %s' % json.loads(message.body))
 
                 self.delete_response_from_queue(message.receipt_handle)
@@ -102,7 +99,7 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 if not os.path.isfile('./resources/response_map.json'):
-    print('Creating global response map')
+    print('Creating global response map', flush=True)
     with lock:
         response_map = {}
         with open('./resources/response_map.json', 'w+') as response_map_file:
@@ -112,7 +109,6 @@ if not os.path.isfile('./resources/response_map.json'):
 @app.route("/recognize", methods=['POST'])
 @cross_origin()
 def recognise():
-    # print(bytes_array)
     image = request.files['myfile'].read()
 
     sqs_web_obj = sqs_web()
@@ -121,8 +117,6 @@ def recognise():
     while True:
         response = sqs_web_obj.pop_response_from_queue()
         if response:
-            return jsonify({
-                'image': 'something'
-            })
+            return jsonify(response)
 
         time.sleep(15)
