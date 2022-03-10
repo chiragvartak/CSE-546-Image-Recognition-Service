@@ -66,8 +66,9 @@ def numberOfEC2ToSpawn():
 def saveImage(image):
     "Takes a Base64 image string, saves it to a path, and returns that path"
     logger.info("Decoding the image from Base64 and making a jpg image file ...")
+    imgData = base64.b64decode(image)
     with open(CURRENT_IMAGE_SAVE_PATH, "wb") as fh:
-        fh.write(base64.decodebytes(image.encode("ascii")))
+        fh.write(imgData)
     logger.info("... decoded image.")
     return CURRENT_IMAGE_SAVE_PATH
 
