@@ -50,14 +50,6 @@ class sqs_web:
         print('Deleted message in web: %s' % sqs_response)
 
     def pop_response_from_queue(self):
-        with lock:
-            with open('resources/response_map.json') as response_map_file:
-                response_map = json.load(response_map_file)
-                if self.message_id in response_map:
-                    response = response_map[self.message_id]
-                    response_map.pop(self.message_id, None)
-                    return response
-
         queue = self.sqs.get_queue_by_name(QueueName=self.sqs_resources['sqs_res_queue_name'])
         messages = queue.receive_messages(
             QueueUrl=queue.url,
@@ -66,22 +58,38 @@ class sqs_web:
             MessageAttributeNames=['All'],
         )
 
-        for message in messages:
-            message_body = json.loads(message.body)
-            print('Response received on web: %s' % json.loads(message.body))
-            self.logger.info('Response received on web: %s' % json.loads(message.body))
+        response = None
+        write_flag = False
+        if messages:
+            write_flag = True
 
-            self.delete_response_from_queue(message.receipt_handle)
+        with lock:
+            with open('resources/response_map.json', 'r') as response_map_file:
+                response_map = json.load(response_map_file)
 
-            if message_body['message_id'] == self.message_id:
-                return message_body['response']
-            else:
-                with lock:
-                    with open('resources/response_map.json') as response_map_file:
-                        response_map = json.load(response_map_file)
-                        response_map[message_body['message_id']] = message_body['response']
+            if self.message_id in response_map:
+                response = response_map[self.message_id]
+                response_map.pop(self.message_id, None)
+                write_flag = True
 
-        return None
+            for message in messages:
+                message_body = json.loads(message.body)
+
+                print('Response received on web: %s' % json.loads(message.body))
+                self.logger.info('Response received on web: %s' % json.loads(message.body))
+
+                self.delete_response_from_queue(message.receipt_handle)
+
+                if message_body['message_id'] == self.message_id:
+                    response = message_body['response']
+                else:
+                    response_map[message_body['message_id']] = message_body['response']
+
+            if write_flag:
+                with open('resources/response_map.json', 'w') as response_map_file:
+                    json.dump(response_map, response_map_file)
+
+        return response
 
 
 app = flask.Flask(__name__)
