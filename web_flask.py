@@ -1,5 +1,4 @@
 import secrets
-
 import flask
 from flask import request, jsonify
 from flask_cors import CORS, cross_origin
@@ -9,6 +8,10 @@ import json
 import logging
 import threading
 import time
+import os
+from PIL import Image
+import base64
+import io
 
 lock = threading.Lock()
 
@@ -21,6 +24,8 @@ class sqs_web:
         self.message_id = secrets.token_hex(16)
 
     def push_request_to_queue(self, image):
+        encoded_image = base64.b64encode(image).decode('utf-8')
+        print(encoded_image)
         try:
             queue = self.sqs.get_queue_by_name(QueueName=self.sqs_resources['sqs_req_queue_name'])
             sqs_response = queue.send_message(
@@ -29,7 +34,7 @@ class sqs_web:
                 MessageAttributes={},
                 MessageBody=json.dumps({
                     'message_id': self.message_id,
-                    'image': image
+                    'image': encoded_image
                 })
             )
             print('Request sent: %s' % sqs_response)
@@ -96,20 +101,28 @@ app = flask.Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
+if not os.path.isfile('./resources/response_map.json'):
+    print('Creating global response map')
+    with lock:
+        response_map = {}
+        with open('./resources/response_map.json', 'w+') as response_map_file:
+            json.dump(response_map, response_map_file)
+
 
 @app.route("/recognize", methods=['POST'])
 @cross_origin()
 def recognise():
-    request_image = request.json['image']
+    # print(bytes_array)
+    image = request.files['myfile'].read()
 
     sqs_web_obj = sqs_web()
-    sqs_web_obj.push_request_to_queue(request_image)
+    sqs_web_obj.push_request_to_queue(image)
 
     while True:
         response = sqs_web_obj.pop_response_from_queue()
         if response:
             return jsonify({
-                'something': 'something'
+                'image': 'something'
             })
 
         time.sleep(15)
