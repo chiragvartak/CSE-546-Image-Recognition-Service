@@ -15,6 +15,21 @@ import io
 
 lock = threading.Lock()
 
+app = flask.Flask(__name__)
+app.config['CORS_HEADERS'] = 'Content-Type'
+cors = CORS(app)
+
+if not os.path.isfile('./resources/response_map.json'):
+    print('Creating global response map')
+    with lock:
+        response_map = {}
+        with open('./resources/response_map.json', 'w+') as response_map_file:
+            json.dump(response_map, response_map_file)
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
+
 
 class sqs_web:
     def __init__(self):
@@ -95,18 +110,6 @@ class sqs_web:
                     json.dump(response_map, response_map_file)
 
         return response
-
-
-app = flask.Flask(__name__)
-cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
-
-if not os.path.isfile('./resources/response_map.json'):
-    print('Creating global response map')
-    with lock:
-        response_map = {}
-        with open('./resources/response_map.json', 'w+') as response_map_file:
-            json.dump(response_map, response_map_file)
 
 
 @app.route("/recognize", methods=['POST'])
