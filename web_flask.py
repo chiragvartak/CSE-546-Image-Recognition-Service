@@ -70,7 +70,7 @@ class sqs_web:
         queue = self.sqs.get_queue_by_name(QueueName=self.sqs_resources['sqs_res_queue_name'])
         messages = queue.receive_messages(
             QueueUrl=queue.url,
-            MaxNumberOfMessages=5,
+            MaxNumberOfMessages=10,
             WaitTimeSeconds=15,
             MessageAttributeNames=['All'],
         )
