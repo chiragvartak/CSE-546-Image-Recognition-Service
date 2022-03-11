@@ -120,7 +120,7 @@ def addToResponseQueue(message_id, personName, time_taken):
 
 
 # The current image is stored in the file "current.jpg" and the recognized person name is passed as a parameter
-def storeImageToS3(personName):
+def storeToS3(personName):
     pass
 
 
@@ -176,4 +176,4 @@ if __name__ == "__main__":
         endTime = time()
         timeTakenToRecognizeImage = "%.1fs" % (endTime-startTime)
         addToResponseQueue(requestId, personName, timeTakenToRecognizeImage)
-        storeImageToS3(personName)
+        storeToS3(personName)
