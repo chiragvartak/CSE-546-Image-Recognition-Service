@@ -18,7 +18,7 @@ RESPONSE_QUEUE_NAME = "cc-project-res-sqs"
 DELETE_SQS_MESSAGES_AFTER_RETRIEVING = True
 EXTRA_EC2_INSTANCES = 5
 IDLE_TIME_TO_DELETE_EC2 = 120  # in seconds
-SLAVE_IMAGE_AMI_ID = "ami-05f5d75e7c6d09aac"
+SLAVE_IMAGE_AMI_ID = "ami-015e4e0aba3a1de1e"
 
 # Globals
 isMaster = os.environ.get('IS_MASTER') is not None
