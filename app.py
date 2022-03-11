@@ -1,10 +1,12 @@
-from time import time
+from time import time, sleep
 from math import inf
 import logging
 from fr import face_match
 import boto3
 import json
 import base64
+import os
+import threading
 
 # Constants
 AWS_REGION = "us-east-1"
@@ -12,12 +14,16 @@ DATA_MODEL_PATH = "/home/ec2-user/data.pt"
 CURRENT_IMAGE_SAVE_PATH = "/home/ec2-user/current.jpg"
 REQUEST_QUEUE_NAME = "cc-project-req-sqs"
 RESPONSE_QUEUE_NAME = "cc-project-res-sqs"
-EXTRA_EC2_INSTANCES = 2
 DELETE_SQS_MESSAGES_AFTER_RETRIEVING = True
+EXTRA_EC2_INSTANCES = 5
+IDLE_TIME_TO_DELETE_EC2 = 120  # in seconds
+SLAVE_IMAGE_AMI_ID = "ami-05f5d75e7c6d09aac"
 
 # Globals
-isMaster = False
+isMaster = os.environ.get('IS_MASTER') is not None
 timeOfLastLoad = -inf
+activeEC2Instances = []
+spawningOrDeletingEC2 = False
 
 # Logging. Source: example on https://docs.python.org/3/howto/logging.html
 logger = logging.getLogger(__name__)
@@ -32,7 +38,7 @@ logger.addHandler(ch)
 sqs = boto3.resource('sqs', region_name=AWS_REGION)
 requestQueue = sqs.get_queue_by_name(QueueName=REQUEST_QUEUE_NAME)
 responseQueue = sqs.get_queue_by_name(QueueName=RESPONSE_QUEUE_NAME)
-
+ec2 = boto3.resource('ec2')
 
 # Testing code below - delete it!
 # testImagePath = "/home/ec2-user/mine/face_images_100/test_00.jpg"
@@ -70,11 +76,10 @@ def waitTillAnItemAvailableInRequestQueue():
 
 
 def spawnCondition():
-    return False
-
-
-def numberOfEC2ToSpawn():
-    return EXTRA_EC2_INSTANCES
+    numberOfMessagesInRequestQueue = int(requestQueue.attributes["ApproximateNumberOfMessages"])
+    return (not spawningOrDeletingEC2) and \
+        len(activeEC2Instances) == 0 and \
+        numberOfMessagesInRequestQueue > 20
 
 
 def saveImage(image):
@@ -112,8 +117,41 @@ def addToResponseQueue(message_id, personName, time_taken):
     logger.info("... response sent to queue.")
 
 
-def spawnAndDelete(numberOfEC2):
-    pass
+def spawnAndDelete():
+    logger.info("Spawning extra EC2 instances ...")
+    global activeEC2Instances
+    for i in range(1, EXTRA_EC2_INSTANCES + 1):
+        instanceName = "slave-"+str(i)
+        instance = ec2.create_instances(
+            ImageId=SLAVE_IMAGE_AMI_ID,
+            MinCount=1,
+            MaxCount=1,
+            InstanceType='t2.micro',
+            KeyName='ec2-nvi',
+            TagSpecifications=[
+                {
+                    'ResourceType': 'instance',
+                    'Tags': [
+                        {
+                            'Key': 'Name',
+                            'Value': instanceName
+                        },
+                    ]
+                }
+            ],
+        )
+        logger.info("... spawned %s." % instanceName)
+        activeEC2Instances.append(instance[0])
+    # Delete EC2 instances after there has been no load for a while
+    while time()-timeOfLastLoad < IDLE_TIME_TO_DELETE_EC2:
+        sleep(1.0)
+    logger.info("There has been no load for %s secs; deleting extra instances ..." % str(IDLE_TIME_TO_DELETE_EC2))
+    instanceIds = [instance.instance_id for instance in activeEC2Instances]
+    ec2.instances.filter(InstanceIds=instanceIds).terminate()
+    activeEC2Instances = []
+    logger.info("... deleted extra instances.")
+    global spawningOrDeletingEC2
+    spawningOrDeletingEC2 = False
 
 
 if __name__ == "__main__":
@@ -121,6 +159,9 @@ if __name__ == "__main__":
         requestId, image = waitTillAnItemAvailableInRequestQueue()
         timeOfLastLoad = time()
         if isMaster and spawnCondition():
-            spawnAndDelete(numberOfEC2ToSpawn())
+            spawningOrDeletingEC2 = True
+            th = threading.Thread(target=spawnAndDelete)
+            th.start()
+            sleep(1)
         personName = findOutput(image)
         addToResponseQueue(requestId, personName, "12345")
