@@ -7,6 +7,7 @@ import json
 import base64
 import os
 import threading
+import socket
 
 # Constants
 AWS_REGION = "us-east-1"
@@ -24,6 +25,7 @@ isMaster = os.environ.get('IS_MASTER') is not None
 timeOfLastLoad = -inf
 activeEC2Instances = []
 spawningOrDeletingEC2 = False
+hostname = socket.gethostname()
 
 # Logging. Source: example on https://docs.python.org/3/howto/logging.html
 logger = logging.getLogger(__name__)
@@ -105,7 +107,7 @@ def addToResponseQueue(message_id, personName, time_taken):
         "message_id": message_id,
         "response": personName,
         "time_taken": time_taken,
-        "ec2_name": "dummy"
+        "ec2_name": "master" if isMaster else hostname
     }
     messageBodyStr = json.dumps(messageBody)
     logger.info("Sending response to queue: %s ..." % messageBodyStr)
@@ -122,7 +124,7 @@ def spawnAndDelete():
     global activeEC2Instances
     for i in range(1, EXTRA_EC2_INSTANCES + 1):
         instanceName = "slave-"+str(i)
-        instance = ec2.create_instances(
+        instances = ec2.create_instances(
             ImageId=SLAVE_IMAGE_AMI_ID,
             MinCount=1,
             MaxCount=1,
@@ -141,7 +143,8 @@ def spawnAndDelete():
             ],
         )
         logger.info("... spawned %s." % instanceName)
-        activeEC2Instances.append(instance[0])
+        instance = instances[0]
+        activeEC2Instances.append(instance)
     # Delete EC2 instances after there has been no load for a while
     while time()-timeOfLastLoad < IDLE_TIME_TO_DELETE_EC2:
         sleep(1.0)
@@ -163,5 +166,8 @@ if __name__ == "__main__":
             th = threading.Thread(target=spawnAndDelete)
             th.start()
             sleep(1)
+        startTime = time()
         personName = findOutput(image)
-        addToResponseQueue(requestId, personName, "12345")
+        endTime = time()
+        timeTakenToRecognizeImage = "%.1fs" % (endTime-startTime)
+        addToResponseQueue(requestId, personName, timeTakenToRecognizeImage)
