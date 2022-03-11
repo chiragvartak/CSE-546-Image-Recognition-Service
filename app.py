@@ -119,6 +119,11 @@ def addToResponseQueue(message_id, personName, time_taken):
     logger.info("... response sent to queue.")
 
 
+# The current image is stored in the file "current.jpg" and the recognized person name is passed as a parameter
+def storeImageToS3(personName):
+    pass
+
+
 def spawnAndDelete():
     logger.info("Spawning extra EC2 instances ...")
     global activeEC2Instances
@@ -171,3 +176,4 @@ if __name__ == "__main__":
         endTime = time()
         timeTakenToRecognizeImage = "%.1fs" % (endTime-startTime)
         addToResponseQueue(requestId, personName, timeTakenToRecognizeImage)
+        storeImageToS3(personName)
