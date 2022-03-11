@@ -42,7 +42,7 @@ class sqs_web:
             queue = self.sqs.get_queue_by_name(QueueName=self.sqs_resources['sqs_req_queue_name'])
             sqs_response = queue.send_message(
                 QueueUrl=queue.url,
-                DelaySeconds=10,
+                # DelaySeconds=10,
                 MessageAttributes={},
                 MessageBody=json.dumps({
                     'message_id': self.message_id,
@@ -71,7 +71,7 @@ class sqs_web:
         messages = queue.receive_messages(
             QueueUrl=queue.url,
             MaxNumberOfMessages=10,
-            WaitTimeSeconds=15,
+            WaitTimeSeconds=8,
             MessageAttributeNames=['All'],
         )
 
@@ -122,4 +122,4 @@ def recognise():
         if response:
             return jsonify(response)
 
-        time.sleep(15)
+        # time.sleep(15)
