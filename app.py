@@ -65,7 +65,7 @@ def waitTillAnItemAvailableInRequestQueue():
         messages = requestQueue.receive_messages(
             QueueUrl=requestQueue.url,
             MaxNumberOfMessages=1,
-            WaitTimeSeconds=1,
+            WaitTimeSeconds=20,  # If infinite was allowed I'd set it to that. But the max allowed is 20 secs.
             MessageAttributeNames=['All']
         )
     msgJson = json.loads(messages[0].body)
@@ -78,10 +78,9 @@ def waitTillAnItemAvailableInRequestQueue():
 
 
 def spawnCondition():
-    numberOfMessagesInRequestQueue = int(requestQueue.attributes["ApproximateNumberOfMessages"])
     return (not spawningOrDeletingEC2) and \
         len(activeEC2Instances) == 0 and \
-        numberOfMessagesInRequestQueue > 20
+        int(requestQueue.attributes["ApproximateNumberOfMessages"]) > 20
 
 
 def saveImage(image):
