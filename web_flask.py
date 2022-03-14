@@ -48,8 +48,8 @@ class sqs_web:
                 # DelaySeconds=10,
                 MessageAttributes={},
                 MessageBody=json.dumps({
-                    'message_id': self.message_id,
-                    'image': '%s___%s' % (str(file_name), encoded_image)
+                    'message_id': '%s___%s' % (str(file_name), self.message_id),
+                    'image': encoded_image
                 })
             )
             print('Request sent: %s' % sqs_response, flush=True)
