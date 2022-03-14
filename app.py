@@ -121,8 +121,22 @@ def addToResponseQueue(message_id, personName, time_taken):
 
 
 # The current image is stored in the file "current.jpg" and the recognized person name is passed as a parameter
-def storeToS3(personName):
-    pass
+def storeToS3(requestID, file_name, personName):
+    logger.info("Uploading to S3 bucket..")
+    s3client = boto3.client('s3')
+    s3client.upload_file(
+    '/home/ec2-user/current.jpg', '546input', file_name + '.jpg',
+    ExtraArgs={'Metadata': {'RequestID': requestID}})
+
+    # Writing classification result to a text file for Storage
+    with open('/home/ec2-user/personName.txt', 'w') as f:
+        f.write(personName)
+    
+    s3client.upload_file(
+    '/home/ec2-user/personName.txt', '546output', file_name + '.txt',
+    ExtraArgs={'Metadata': {'RequestID': requestID}})
+
+    logger.info("S3 Upload complete..")
 
 
 def spawnAndDelete():
@@ -177,4 +191,4 @@ if __name__ == "__main__":
         endTime = time()
         timeTakenToRecognizeImage = "%.1fs" % (endTime-startTime)
         addToResponseQueue(requestId, personName, timeTakenToRecognizeImage)
-        storeToS3(personName)
+        storeToS3(requestId, file_name, personName)
