@@ -36,7 +36,10 @@ class sqs_web:
         self.sqs = boto3.resource('sqs', region_name=self.sqs_resources['sqs_region'])
         self.message_id = secrets.token_hex(16)
 
-    def push_request_to_queue(self, image):
+    def push_request_to_queue(self, file_binary):
+        image = file_binary.read()
+        file_name = os.path.splitext(file_binary.filename)[0]
+
         encoded_image = base64.b64encode(image).decode('utf-8')
         try:
             queue = self.sqs.get_queue_by_name(QueueName=self.sqs_resources['sqs_req_queue_name'])
@@ -46,7 +49,7 @@ class sqs_web:
                 MessageAttributes={},
                 MessageBody=json.dumps({
                     'message_id': self.message_id,
-                    'image': encoded_image
+                    'image': '%s___%s' % (str(file_name), encoded_image)
                 })
             )
             print('Request sent: %s' % sqs_response, flush=True)
@@ -112,10 +115,10 @@ class sqs_web:
 @app.route("/recognize", methods=['POST'])
 @cross_origin()
 def recognise():
-    image = request.files['myfile'].read()
+    file_binary = request.files['myfile']
 
     sqs_web_obj = sqs_web()
-    sqs_web_obj.push_request_to_queue(image)
+    sqs_web_obj.push_request_to_queue(file_binary)
 
     while True:
         response = sqs_web_obj.pop_response_from_queue()

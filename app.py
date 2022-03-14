@@ -69,12 +69,14 @@ def waitTillAnItemAvailableInRequestQueue():
             MessageAttributeNames=['All']
         )
     msgJson = json.loads(messages[0].body)
+    message_file_name, message_id = msgJson['message_id'].split('___')
+
     logger.info("... retrieved message from the request queue. The request id is " + msgJson["message_id"])
     if DELETE_SQS_MESSAGES_AFTER_RETRIEVING:
         handle = messages[0].receipt_handle
         delete_request_from_queue(handle)
     logger.info("Deleted message %s from the request queue." % msgJson["message_id"])
-    return msgJson["message_id"], msgJson["image"]
+    return message_id, message_file_name, msgJson["image"]
 
 
 def spawnCondition():
@@ -163,7 +165,7 @@ def spawnAndDelete():
 
 if __name__ == "__main__":
     while True:
-        requestId, image = waitTillAnItemAvailableInRequestQueue()
+        requestId, file_name, image = waitTillAnItemAvailableInRequestQueue()
         timeOfLastLoad = time()
         if isMaster and spawnCondition():
             spawningOrDeletingEC2 = True
