@@ -10,6 +10,11 @@ import threading
 import time
 import os
 import base64
+from time import time
+from ec2Spawner import ec2Spawner
+
+# Stuff required to spawn and delete EC2 app instances
+timeOfLastLoad = [time()]
 
 lock = threading.Lock()
 
@@ -24,6 +29,11 @@ if not os.path.isfile('./resources/response_map.json'):
         with open('./resources/response_map.json', 'w+') as response_map_file:
             json.dump(response_map, response_map_file)
 
+# Start the ec2Spawner thread
+print("Starting the ec2Spawner thread ...", flush=True)
+th = threading.Thread(target=ec2Spawner, args=[timeOfLastLoad])
+th.start()
+print("... started thread.", flush=True)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
@@ -115,6 +125,7 @@ class sqs_web:
 @app.route("/recognize", methods=['POST'])
 @cross_origin()
 def recognise():
+    timeOfLastLoad[0] = time()
     file_binary = request.files['myfile']
 
     sqs_web_obj = sqs_web()
@@ -123,6 +134,7 @@ def recognise():
     while True:
         response = sqs_web_obj.pop_response_from_queue()
         if response:
+            timeOfLastLoad[0] = time()
             return jsonify(response)
 
         # time.sleep(15)
