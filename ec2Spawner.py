@@ -10,11 +10,11 @@ IDLE_TIME_TO_DELETE_EC2 = 120  # in seconds
 SLAVE_IMAGE_AMI_ID = "ami-015e4e0aba3a1de1e"
 REQUEST_QUEUE_NAME = "cc-project-req-sqs"
 CHECK_SPAWN_CONDITION_TIME_INTERVAL = 5  # in seconds
+MIN_MSGS_IN_QUEUE_TO_SPAWN_EC2 = 1
 
 # Globals and resources
 ec2 = boto3.resource('ec2')
 sqs = boto3.resource('sqs', region_name=AWS_REGION)
-requestQueue = sqs.get_queue_by_name(QueueName=REQUEST_QUEUE_NAME)
 activeEC2Instances = []
 
 # Logging. Source: example on https://docs.python.org/3/howto/logging.html
@@ -28,7 +28,13 @@ logger.addHandler(ch)
 
 
 def spawnCondition():
-    return len(activeEC2Instances) == 0
+    requestQueue = sqs.get_queue_by_name(QueueName=REQUEST_QUEUE_NAME)
+    approximateNumberOfMessages = int(requestQueue.attributes["ApproximateNumberOfMessages"])
+    logger.info("activeEC2Instances=%s" % (activeEC2Instances))
+    logger.info("approximateNumberOfMessages=%d" % approximateNumberOfMessages)
+    return len(activeEC2Instances) == 0 and \
+        approximateNumberOfMessages >= MIN_MSGS_IN_QUEUE_TO_SPAWN_EC2
+
 
 def spawnAndDelete(timeOfLastLoad):
     logger.info("Spawning extra EC2 instances ...")
