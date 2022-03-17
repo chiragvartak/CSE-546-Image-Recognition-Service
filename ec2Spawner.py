@@ -1,8 +1,6 @@
-import threading
 from time import time, sleep
 import logging
 import boto3
-import os
 from typing import List
 
 # Constants
@@ -14,14 +12,11 @@ REQUEST_QUEUE_NAME = "cc-project-req-sqs"
 CHECK_SPAWN_CONDITION_TIME_INTERVAL = 5  # in seconds
 MIN_MESSAGES_IN_QUEUE_TO_SPAWN_NEW_EC2 = 0  # yeah, keep this to zero; you want to spawn instances even for 1 request
 
-
 # Globals and resources
 ec2 = boto3.resource('ec2')
 sqs = boto3.resource('sqs', region_name=AWS_REGION)
 requestQueue = sqs.get_queue_by_name(QueueName=REQUEST_QUEUE_NAME)
-# isMaster = os.environ.get('IS_MASTER') is not None
 activeEC2Instances = []
-# spawningOrDeletingEC2 = False
 
 # Logging. Source: example on https://docs.python.org/3/howto/logging.html
 logger = logging.getLogger(__name__)
@@ -32,15 +27,17 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+
 def spawnCondition():
     return len(activeEC2Instances) == 0 and \
-        int(requestQueue.attributes["ApproximateNumberOfMessages"]) > MIN_MESSAGES_IN_QUEUE_TO_SPAWN_NEW_EC2
+           int(requestQueue.attributes["ApproximateNumberOfMessages"]) > MIN_MESSAGES_IN_QUEUE_TO_SPAWN_NEW_EC2
+
 
 def spawnAndDelete(timeOfLastLoad):
     logger.info("Spawning extra EC2 instances ...")
     global activeEC2Instances
     for i in range(1, EXTRA_EC2_INSTANCES + 1):
-        instanceName = "app-instance"+str(i)
+        instanceName = "app-instance" + str(i)
         instances = ec2.create_instances(
             ImageId=SLAVE_IMAGE_AMI_ID,
             MinCount=1,
@@ -63,25 +60,21 @@ def spawnAndDelete(timeOfLastLoad):
         instance = instances[0]
         activeEC2Instances.append(instance)
     # Delete EC2 instances after there has been no load for a while
-    while time()-timeOfLastLoad[0] < IDLE_TIME_TO_DELETE_EC2:
+    while time() - timeOfLastLoad[0] < IDLE_TIME_TO_DELETE_EC2:
         sleep(1.0)
     logger.info("There has been no load for %s secs; deleting extra instances ..." % str(IDLE_TIME_TO_DELETE_EC2))
     instanceIds = [instance.instance_id for instance in activeEC2Instances]
     ec2.instances.filter(InstanceIds=instanceIds).terminate()
     activeEC2Instances = []
     logger.info("... deleted extra instances.")
-    # global spawningOrDeletingEC2
-    # spawningOrDeletingEC2 = False
+
 
 def ec2Spawner(timeOfLastLoad: List[float]):
     try:
         while True:
             logger.info("Waiting for the spawn condition ...")
             if spawnCondition():
-                # global spawningOrDeletingEC2
-                # spawningOrDeletingEC2 = True
                 spawnAndDelete(timeOfLastLoad)
-                # spawningOrDeletingEC2 = False
             sleep(CHECK_SPAWN_CONDITION_TIME_INTERVAL)
     except Exception as e:
         logger.error("Thread ec2Spawner ended with exception: " + repr(e))

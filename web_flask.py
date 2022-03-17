@@ -35,6 +35,7 @@ th = threading.Thread(target=ec2Spawner, args=[timeOfLastLoad])
 th.start()
 print("... started thread.", flush=True)
 
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
 
