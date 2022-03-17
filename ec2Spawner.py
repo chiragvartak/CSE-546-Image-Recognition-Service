@@ -7,7 +7,7 @@ from typing import List
 AWS_REGION = "us-east-1"
 EXTRA_EC2_INSTANCES = 5
 IDLE_TIME_TO_DELETE_EC2 = 120  # in seconds
-SLAVE_IMAGE_AMI_ID = "ami-015e4e0aba3a1de1e"
+SLAVE_IMAGE_AMI_ID = "ami-07c37cfe98169cdde"
 REQUEST_QUEUE_NAME = "cc-project-req-sqs"
 CHECK_SPAWN_CONDITION_TIME_INTERVAL = 5  # in seconds
 MIN_MSGS_IN_QUEUE_TO_SPAWN_EC2 = 1
