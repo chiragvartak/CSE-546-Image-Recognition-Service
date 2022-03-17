@@ -136,6 +136,6 @@ def recognise():
         response = sqs_web_obj.pop_response_from_queue()
         if response:
             timeOfLastLoad[0] = time()
-            return jsonify(response)
+            return response
 
         # time.sleep(15)
