@@ -10,7 +10,6 @@ IDLE_TIME_TO_DELETE_EC2 = 120  # in seconds
 SLAVE_IMAGE_AMI_ID = "ami-015e4e0aba3a1de1e"
 REQUEST_QUEUE_NAME = "cc-project-req-sqs"
 CHECK_SPAWN_CONDITION_TIME_INTERVAL = 5  # in seconds
-MIN_MESSAGES_IN_QUEUE_TO_SPAWN_NEW_EC2 = 0  # yeah, keep this to zero; you want to spawn instances even for 1 request
 
 # Globals and resources
 ec2 = boto3.resource('ec2')
@@ -29,9 +28,7 @@ logger.addHandler(ch)
 
 
 def spawnCondition():
-    return len(activeEC2Instances) == 0 and \
-           int(requestQueue.attributes["ApproximateNumberOfMessages"]) > MIN_MESSAGES_IN_QUEUE_TO_SPAWN_NEW_EC2
-
+    return len(activeEC2Instances) == 0
 
 def spawnAndDelete(timeOfLastLoad):
     logger.info("Spawning extra EC2 instances ...")
