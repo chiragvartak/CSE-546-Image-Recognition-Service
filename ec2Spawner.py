@@ -57,6 +57,9 @@ def spawnAndDelete(timeOfLastLoad):
         instance = instances[0]
         activeEC2Instances.append(instance)
     # Delete EC2 instances after there has been no load for a while
+    timeOfLastLoad[0] = time()  # To make sure that there is some time between creating an instance and deleting it
+                                # Not doing this might cause trying to delete a "Pending" instance, which will give a
+                                # InvalidInstanceID.NotFound error.
     while time() - timeOfLastLoad[0] < IDLE_TIME_TO_DELETE_EC2:
         sleep(1.0)
     logger.info("There has been no load for %s secs; deleting extra instances ..." % str(IDLE_TIME_TO_DELETE_EC2))
