@@ -1,5 +1,0 @@
-{
-    "sqs_req_queue_name": "cc-project-req-sqs",
-    "sqs_res_queue_name": "cc-project-res-sqs",
-    "sqs_region": "us-west-1"
-}
