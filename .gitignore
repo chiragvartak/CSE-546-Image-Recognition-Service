@@ -131,6 +131,8 @@ dmypy.json
 
 # CSE-546
 # Project files and others
+*.DS_Store
 .idea/
 Project1/resources/response_map.json
 Project1/*.jpg
+*.pth
