@@ -22,11 +22,11 @@ app = flask.Flask(__name__)
 app.config['CORS_HEADERS'] = 'Content-Type'
 cors = CORS(app)
 
-if not os.path.isfile('./resources/response_map.json'):
+if not os.path.isfile('resources/response_map.json'):
     print('Creating global response map')
     with lock:
         response_map = {}
-        with open('./resources/response_map.json', 'w+') as response_map_file:
+        with open('resources/response_map.json', 'w+') as response_map_file:
             json.dump(response_map, response_map_file)
 
 # Start the ec2Spawner thread
