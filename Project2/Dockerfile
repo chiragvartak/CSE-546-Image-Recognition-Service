@@ -30,6 +30,10 @@ WORKDIR ${FUNCTION_DIR}
 # Copy in the build image dependencies
 COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}
 
+# Install necessary executables
+RUN apt-get update
+RUN apt-get install -y ffmpeg
+
 # Copy function code
 #COPY cse546ir/* ${FUNCTION_DIR}
 COPY cse546ir/models ${FUNCTION_DIR}/models
