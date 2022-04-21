@@ -14,9 +14,11 @@ ARG FUNCTION_DIR
 # Create function directory
 RUN mkdir -p ${FUNCTION_DIR}
 # Install the runtime interface client
+RUN pip install --target ${FUNCTION_DIR} awslambdaric
 RUN pip install \
         --target ${FUNCTION_DIR} \
-        awslambdaric matplotlib torch torchvision
+        torch torchvision \
+        --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Multi-stage build: grab a fresh copy of the base image
 FROM python:3.8-slim
@@ -34,5 +36,4 @@ COPY cse546ir/*.py ${FUNCTION_DIR}
 COPY cse546ir/checkpoint ${FUNCTION_DIR}/checkpoint
 
 ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
-CMD [ "app.handler" ]
-
+CMD [ "cse546ir.handler" ]
