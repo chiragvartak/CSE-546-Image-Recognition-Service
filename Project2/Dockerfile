@@ -19,6 +19,7 @@ RUN pip install \
         --target ${FUNCTION_DIR} \
         torch torchvision \
         --extra-index-url https://download.pytorch.org/whl/cpu
+RUN pip install --target ${FUNCTION_DIR} boto3
 
 # Multi-stage build: grab a fresh copy of the base image
 FROM python:3.8-slim
@@ -36,4 +37,4 @@ COPY cse546ir/*.py ${FUNCTION_DIR}
 COPY cse546ir/checkpoint ${FUNCTION_DIR}/checkpoint
 
 ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
-CMD [ "cse546ir.handler" ]
+CMD [ "cse546ir.lambda_handler" ]
