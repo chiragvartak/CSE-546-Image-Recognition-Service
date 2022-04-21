@@ -1,22 +1,38 @@
-FROM public.ecr.aws/lambda/python:3.8
+# Define function directory
+ARG FUNCTION_DIR="/function"
+FROM python:3.8-slim as build-image
+# Install aws-lambda-cpp build dependencies
+RUN apt-get update && \
+  apt-get install -y \
+  g++ \
+  make \
+  cmake \
+  unzip \
+  libcurl4-openssl-dev
+# Include global arg in this stage of the build
+ARG FUNCTION_DIR
+# Create function directory
+RUN mkdir -p ${FUNCTION_DIR}
+# Install the runtime interface client
+RUN pip install \
+        --target ${FUNCTION_DIR} \
+        awslambdaric matplotlib torch torchvision
+
+# Multi-stage build: grab a fresh copy of the base image
+FROM python:3.8-slim
+# Include global arg in this stage of the build
+ARG FUNCTION_DIR
+# Set working directory to function root directory
+WORKDIR ${FUNCTION_DIR}
+# Copy in the build image dependencies
+COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}
 
 # Copy function code
-WORKDIR ${LAMBDA_TASK_ROOT}/Project2
-ADD checkpoint/ .
-ADD data/ .
-ADD models/ .
-COPY build_custom_model.py .
-COPY camera.py .
-COPY eval_face_recognition.py .
-COPY eval_face_recognition2.py .
-COPY queryDB.py .
-COPY requirements.txt .
-COPY show_data.png .
-COPY train_face_recognition.py .
-COPY video_lambda.py .
+#COPY cse546ir/* ${FUNCTION_DIR}
+COPY cse546ir/models ${FUNCTION_DIR}/models
+COPY cse546ir/*.py ${FUNCTION_DIR}
+COPY cse546ir/checkpoint ${FUNCTION_DIR}/checkpoint
 
-# Install the function's dependencies using file requirements.txt
-RUN pip3 install -r requirements.txt --target ${LAMBDA_TASK_ROOT}/Project2
+ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
+CMD [ "app.handler" ]
 
-# Set the CMD to your handler (could also be done as a parameter override outside of the Dockerfile)
-CMD [ "video_lambda.lambda_handler" ]

@@ -40,7 +40,7 @@ def spawnAndDelete(timeOfLastLoad):
     logger.info("Spawning extra EC2 instances ...")
     global activeEC2Instances
     for i in range(1, EXTRA_EC2_INSTANCES + 1):
-        instanceName = "app-instance" + str(i)
+        instanceName = "TestApp-instance" + str(i)
         instances = ec2.create_instances(
             ImageId=SLAVE_IMAGE_AMI_ID,
             MinCount=1,

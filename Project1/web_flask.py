@@ -13,7 +13,7 @@ import base64
 from time import time
 from ec2Spawner import ec2Spawner
 
-# Stuff required to spawn and delete EC2 app instances
+# Stuff required to spawn and delete EC2 TestApp instances
 timeOfLastLoad = [time()]
 
 lock = threading.Lock()

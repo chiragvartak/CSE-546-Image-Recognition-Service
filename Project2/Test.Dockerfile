@@ -18,7 +18,7 @@ ARG FUNCTION_DIR
 RUN mkdir -p ${FUNCTION_DIR}
 
 # Copy function code
-COPY app/* ${FUNCTION_DIR}
+COPY TestApp/* ${FUNCTION_DIR}
 
 # Install the runtime interface client
 RUN pip install \

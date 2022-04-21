@@ -1,20 +1,13 @@
 import torch
-import torchvision
 import torchvision.transforms as transforms
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.models as models
-from models.inception_resnet_v1 import InceptionResnetV1
-from urllib.request import urlopen
 from PIL import Image
 import json
 import numpy as np
-import argparse
 import build_custom_model
 from time import time
 
-labels_dir = "./checkpoint/labels.json"
-model_path = "./checkpoint/model_vggface2_best.pth"
+labels_dir = "checkpoint/labels.json"
+model_path = "checkpoint/model_vggface2_best.pth"
 
 # read labels
 with open(labels_dir) as f:

@@ -1,11 +1,5 @@
 import torch
-import torchvision
 import torchvision.transforms as transforms
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.models as models
-from models.inception_resnet_v1 import InceptionResnetV1
-from urllib.request import urlopen
 from PIL import Image
 import json
 import numpy as np
@@ -19,8 +13,8 @@ if __name__ == "__main__":
      parser.add_argument('--img_path', type=str, default="./data/test_me/val/angelina_jolie/1.png", help='the path of the dataset')
      args = parser.parse_args()
      img_path = args.img_path
-     labels_dir = "./checkpoint/labels.json"
-     model_path = "./checkpoint/model_vggface2_best.pth"
+     labels_dir = "checkpoint/labels.json"
+     model_path = "checkpoint/model_vggface2_best.pth"
 
 
      # read labels

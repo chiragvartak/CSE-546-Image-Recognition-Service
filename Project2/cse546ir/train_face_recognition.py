@@ -1,18 +1,15 @@
-from torch import nn, optim, as_tensor
-from torch.utils.data import Dataset, DataLoader
-import torch.nn.functional as F
+from torch import nn, optim
+from torch.utils.data import Dataset
 from torch.optim import lr_scheduler
 from torch.nn.init import *
-from torchvision import transforms, utils, datasets, models
+from torchvision import transforms, utils, datasets
 import time
 import copy
 import os
-import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import json
 import argparse
-from models.inception_resnet_v1 import InceptionResnetV1
 import build_custom_model
 
 
@@ -96,8 +93,8 @@ if __name__ == "__main__":
 
     data_dir = args.data_dir
     num_epochs = args.num_epochs
-    labels_dir = "./checkpoint/labels.json" # the path to save labels
-    model_path = "./checkpoint/model_vggface2_best.pth" # the path to save best model weights
+    labels_dir = "checkpoint/labels.json"  # the path to save labels
+    model_path = "checkpoint/model_vggface2_best.pth"  # the path to save best model weights
 
 
     data_transforms = {

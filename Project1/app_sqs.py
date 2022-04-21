@@ -24,8 +24,8 @@ class sqs_app:
             return None, None
 
         message = messages[0]
-        print("Request received on app: %s" % json.loads(message.body))
-        self.logger.info('Request received on app: %s' % message)
+        print("Request received on TestApp: %s" % json.loads(message.body))
+        self.logger.info('Request received on TestApp: %s' % message)
 
         return json.loads(message.body), message.receipt_handle
 
@@ -43,7 +43,7 @@ class sqs_app:
                 'ReceiptHandle': handle
             }]
         )
-        print('Deleted message in app: %s' % sqs_response)
+        print('Deleted message in TestApp: %s' % sqs_response)
 
     def push_response_to_queue(self, message):
         queue = self.sqs.get_queue_by_name(QueueName=self.sqs_resources['sqs_res_queue_name'])
@@ -54,7 +54,7 @@ class sqs_app:
             MessageBody=json.dumps(message)
         )
 
-        print("Response sent from app: %s" % sqs_response)
+        print("Response sent from TestApp: %s" % sqs_response)
         self.logger.info('Response sent: %s' % sqs_response)
 
 
