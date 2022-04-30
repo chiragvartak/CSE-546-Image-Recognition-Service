@@ -37,8 +37,8 @@ RUN apt-get install -y ffmpeg
 # Copy function code
 #COPY cse546ir/* ${FUNCTION_DIR}
 COPY cse546ir/models ${FUNCTION_DIR}/models
-COPY cse546ir/*.py ${FUNCTION_DIR}
 COPY cse546ir/checkpoint ${FUNCTION_DIR}/checkpoint
+COPY cse546ir/*.py ${FUNCTION_DIR}
 RUN mkdir -p "/tmp/PyTorchHome"
 
 ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]

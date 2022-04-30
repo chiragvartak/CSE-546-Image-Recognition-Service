@@ -45,7 +45,7 @@ def lambda_handler(event, context):
     for frame_filename in os.listdir('/tmp'):
         if frame_filename.endswith('.jpeg'):
             print(frame_filename)
-            result = eval_face_recognition2.evalImage(frame_filename)
+            result = eval_face_recognition2.evalImage("/tmp/" + frame_filename)
             print('INFO: FACE RECOGNIZED AS: %s' % result)
 
             db_item = dynamodb.get_item(
