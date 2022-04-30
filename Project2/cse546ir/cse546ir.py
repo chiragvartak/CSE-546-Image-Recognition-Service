@@ -1,7 +1,10 @@
+# Set environment variables even before importing the module - you never know which modules use which env variables
+import os
+os.environ["TORCH_HOME"] = "/tmp/PyTorchHome"
+
 import json
 import urllib.parse
 import boto3
-import os
 import subprocess
 import time
 import eval_face_recognition2
