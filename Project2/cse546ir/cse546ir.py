@@ -18,7 +18,7 @@ session = boto3.Session(
 
 s3 = session.client('s3')
 dynamodb = session.client('dynamodb', region_name='us-east-1')
-sqs = session.client('sqs', region_name='us-east-1')
+sqs = session.resource('sqs', region_name='us-east-1')
 queue = sqs.get_queue_by_name(QueueName='cc-project2-response-queue')
 
 def lambda_handler(event, context):
@@ -59,7 +59,7 @@ def lambda_handler(event, context):
             sqs_response = queue.send_message(
                 QueueUrl=queue.url,
                 MessageAttributes={},
-                MessageBody=json.dumps(response['Item'])
+                MessageBody=json.dumps(db_item)
             )
             print('INFO: SQS RESPONSE: %s' % (sqs_response))
     return True
