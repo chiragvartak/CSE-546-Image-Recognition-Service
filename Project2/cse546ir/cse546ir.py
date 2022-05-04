@@ -12,8 +12,6 @@ os.environ["TORCH_HOME"] = "/tmp/PyTorchHome"  # Set environment variables even 
 import eval_face_recognition2
 
 # Import private configs, if the private_config.py file exists
-aws_access_key_id = ''
-aws_secret_access_key = ''
 try:
     import private_config
     aws_access_key_id = private_config.ACCESS_KEY_ID
@@ -27,12 +25,12 @@ s3 = session.client('s3')
 dynamodb = session.client('dynamodb', region_name='us-east-1')
 sqs = session.resource('sqs', region_name='us-east-1')
 queue = sqs.get_queue_by_name(QueueName='cc-project2-response-queue')
-print("... loaded function. Took %.3f secs" % (time.time()-startLoadingTime))
+print("... loaded function. Took %s secs" % str(time.time()-startLoadingTime))
 
 
 def lambda_handler(event, context):
     startLambdaTime = time.time()
-    print("Received event: " + json.dumps(event))
+    print("Received event: %s" % event)
 
     # Get the object from the event and show its content type
     bucket = event['Records'][0]['s3']['bucket']['name']
@@ -40,32 +38,32 @@ def lambda_handler(event, context):
     print("Input bucket and key: { Bucket: '%s', Key: '%s' }" % (bucket, key))
 
     save_file = '/tmp/%s' % key
-    # frame_save_regex = '/tmp/frame_%s_%s.jpeg' % (key.split('.')[0].split('_')[1], '%02d')
     startVideoDownloadTime = time.time()
     s3.download_file(bucket, key, save_file)
-    print("Time taken to download video: %.3f" % (time.time()-startVideoDownloadTime))
+    print("Time taken to download video: %s" % str(time.time()-startVideoDownloadTime))
     
     startExtractFramesTime = time.time()
-    # process_response = subprocess.run(['ffmpeg', '-sseof', '5', '-i', save_file, '-vframes', '1', '/tmp/end.jpeg'],
-    #                                   capture_output=True)
     process_response = subprocess.run(['ffmpeg', '-i', save_file, '-vf', 'fps=1/0.5', '/tmp/img%03d.jpeg'],
                                       capture_output=True)
-    print('Time taken to extract frames: %.3f' % (time.time()-startExtractFramesTime))
+    print('Time taken to extract frames: %s' % str(time.time()-startExtractFramesTime))
 
     for frame_filename in os.listdir('/tmp'):
         if frame_filename.endswith('.jpeg'):
             print(frame_filename)
             startImageRecognitionTime = time.time()
             result = eval_face_recognition2.evalImage("/tmp/" + frame_filename)
-            print("Time taken for image recog: %.3f" % (time.time()-startImageRecognitionTime))
+            print("Time taken for image recog: %s" % str(time.time()-startImageRecognitionTime))
             print('Face recognized: %s' % result)
 
             db_item = dynamodb.get_item(
                 TableName='cc-project2-info-table',
                 Key={
-                    'name': {'S': 'siddhant'}
+                    'name': {'S': result}
                 }
             )['Item']
+            db_item.update({
+                'time': time.time() - startLambdaTime
+            })
             print('Item fetched from DynamoDb: %s' % db_item)
 
             sqs_response = queue.send_message(
@@ -74,5 +72,5 @@ def lambda_handler(event, context):
                 MessageBody=json.dumps(db_item)
             )
             print('SQS Response: %s' % sqs_response)
-    print("Time taken for lambda (excluding loading): %.3f" % (time.time()-startLambdaTime))
+    print("Time taken for lambda (excluding loading): %s" % str(time.time()-startLambdaTime))
     return True
