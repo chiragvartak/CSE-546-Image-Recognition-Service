@@ -13,18 +13,27 @@ import eval_face_recognition2
 print("... loaded eval_face_recognition2. Took %.3f secs" % (time.time()-startLoadingTime))
 
 # Import private configs, if the private_config.py file exists
+aws_access_key_id, aws_secret_access_key = None, None
 try:
     import private_config
     aws_access_key_id = private_config.ACCESS_KEY_ID
     aws_secret_access_key = private_config.ACCESS_KEY_SECRET
 except ModuleNotFoundError:
     pass
+aws_access_key_id_common, aws_secret_access_key_common = aws_access_key_id, aws_secret_access_key
+try:
+    aws_access_key_id_common = private_config.ACCESS_KEY_ID_COMMON
+    aws_secret_access_key_common = private_config.ACCESS_KEY_SECRET_COMMON
+except:
+    pass
 
 # Initialize AWS resources
 session = boto3.Session(aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
 s3 = session.client('s3')
-dynamodb = session.client('dynamodb', region_name='us-east-1')
-sqs = session.resource('sqs', region_name='us-east-1')
+session_common = boto3.Session(aws_access_key_id=aws_access_key_id_common,
+                               aws_secret_access_key=aws_secret_access_key_common)
+dynamodb = session_common.client('dynamodb', region_name='us-east-1')
+sqs = session_common.resource('sqs', region_name='us-east-1')
 queue = sqs.get_queue_by_name(QueueName='cc-project2-response-queue')
 print("... loaded function. Took %s secs" % str(time.time()-startLoadingTime))
 
