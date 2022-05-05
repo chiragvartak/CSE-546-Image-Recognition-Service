@@ -10,6 +10,7 @@ print('Loading function ...')
 os.environ["TORCH_HOME"] = "/tmp/PyTorchHome"  # Set environment variables even before importing the modules - you
                                                # never know which modules use which env variables
 import eval_face_recognition2
+print("... loaded eval_face_recognition2. Took %.3f secs" % (time.time()-startLoadingTime))
 
 # Import private configs, if the private_config.py file exists
 try:
