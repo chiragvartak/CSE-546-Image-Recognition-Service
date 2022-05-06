@@ -136,6 +136,7 @@ dmypy.json
 Project1/resources/response_map.json
 Project1/*.jpg
 *.pth
+*.pt
 *.jpg
 *.jpeg
 *.png

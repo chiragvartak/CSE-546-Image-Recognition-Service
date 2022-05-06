@@ -19,8 +19,17 @@ model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'))['
 model.eval()
 
 
+def crop_image(img):
+    width, height = img.size
+    newWidth, newHeight = min(width,height), min(width,height)
+    area = (0, 0, newWidth, newHeight)
+    return img.crop(area)
+
+
 def evalImage(img_path: str) -> str:
     img = Image.open(img_path)
+    img = crop_image(img)  # Crop the image and make it a square
+    img = img.resize(size=(160, 160))  # Reduce the dimensions of the image to 160x160
     img_tensor = transforms.ToTensor()(img).unsqueeze_(0).to(device)
     outputs = model(img_tensor)
     _, predicted = torch.max(outputs.data, 1)
