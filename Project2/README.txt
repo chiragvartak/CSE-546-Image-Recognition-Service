@@ -13,3 +13,8 @@ On the Raspberry Pi:
 2. Configure the script to upload the videos to the correct S3 bucket.
 
 If all the steps above have been configured correctly, simply start running the script on the Raspberry Pi. The script will upload videos to the S3, which in turn will trigger the Lambda. The recognized faces will be outputted to the SQS, which will then be retrieved from the Lambda and printed on the Raspberry Pi console.
+
+Group members:
+1) Siddhant Srivastava
+2) Chirag Vartak
+3) Nigel Wong
